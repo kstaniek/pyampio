@@ -98,7 +98,7 @@ class AmpioGateway:
         self.protocol = protocol
         self.state = GatewayState.MODULE_DISCOVERY
         self.protocol.send_module_discovery()
-        self._loop.call_later(1, self.discovery_finished)
+        self._loop.call_later(2, self.discovery_finished)
         # send discovery broadcast
 
     @asyncio.coroutine
