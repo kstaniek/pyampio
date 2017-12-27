@@ -7,7 +7,16 @@ Python Client to AMPIO Home Server
 
 Requires Python 3.4+
 
-To test:
+Installation
+------------
+
+.. code:: python
+
+   $ python setup.py install
+
+
+Testing
+-------
 
 .. code:: python
 
