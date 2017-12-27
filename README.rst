@@ -10,7 +10,7 @@ Requires Python 3.4+
 Installation
 ------------
 
-.. code:: python
+.. code:: shell
 
    $ python setup.py install
 
@@ -18,7 +18,7 @@ Installation
 Testing
 -------
 
-.. code:: python
+.. code:: shell
 
    $ ampio --help
    Usage: ampio [OPTIONS]
@@ -36,6 +36,6 @@ Testing
 
 
 .. |Build Status| image:: https://travis-ci.org/kstaniek/pyampio.svg
-   :target: https://travis-ci.org/kstaniek/pampio
+   :target: https://travis-ci.org/kstaniek/pyampio
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/pyampio.svg
-   :target: https://pypi.org/project/pampio/
+   :target: https://pypi.org/project/pyampio/
