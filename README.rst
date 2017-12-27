@@ -10,7 +10,7 @@ Requires Python 3.4+
 Installation
 ------------
 
-.. code:: python
+.. code:: shell
 
    $ python setup.py install
 
@@ -18,7 +18,7 @@ Installation
 Testing
 -------
 
-.. code:: python
+.. code:: shell
 
    $ ampio --help
    Usage: ampio [OPTIONS]
