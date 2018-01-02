@@ -49,7 +49,6 @@ class AmpioGateway:
         self.protocol = None
         self._state = GatewayState.INIT
         asyncio.ensure_future(self._protocol_coro, loop=self._loop)
-        #self._loop.run_until_complete(self._protocol_coro)
 
     @property
     def state(self):

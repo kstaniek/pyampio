@@ -317,9 +317,9 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
 
     def changes(self):
         """Yield the value changes in broadcast data."""
-        yield self._last_changed_index + 1, \
-              self._previous_values[self._last_changed_index], \
-              self._values[self._last_changed_index]
+        yield self._last_changed_index + 1, self._previous_values[self._last_changed_index], \
+            self._values[self._last_changed_index]
+
 
 class BroadcastHeatingZone(metaclass=BroadcastMeta):
     """This is a BroadcastHeatingZone class representing heating zone information."""

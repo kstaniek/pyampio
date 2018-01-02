@@ -473,4 +473,3 @@ class ModuleManager:
             for (attr, index, _) in mod.get_attributes():
                 if attr == attribute:
                     yield attribute, index
-
