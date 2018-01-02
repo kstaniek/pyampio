@@ -5,7 +5,7 @@ from functools import partial
 from collections import defaultdict
 from pyampio.broadcast import BroadcastCache
 from pyampio.broadcast import BroadcastTypes # noqa
-from pyampio.converters import convert_temperature, convert_weekday, convert_meteo  # noqa
+from pyampio.converters import convert_temperature, convert_weekday, convert_meteo, convert_temperature_int  # noqa
 import logging
 from voluptuous import Schema, Required, All, Lower, Any, Optional, Coerce, Invalid
 
@@ -445,14 +445,17 @@ class ModuleManager:
         """Add the on value changed callback."""
         mod = self.get_module(can_id)
         if mod:
-            if attribute is None:
-                for (attribute, index, unit) in mod.get_attributes():
-                    mod.add_listener(attribute, index, partial(callback, self))
-                    _LOG.debug("On value changed callback added {} {} {}".format(can_id, attribute, index))
-
-            else:
-                _LOG.debug("On value changed callback added {} {} {}".format(can_id, attribute, index))
-                mod.add_listener(attribute, index, partial(callback, self))
+            for (attrib, idx, unit) in mod.get_attributes():
+                if attribute is not None:
+                    if attribute != attrib:
+                        continue
+                if index is not None:
+                    if index != idx:
+                        continue
+                mod.add_listener(attrib, idx, partial(callback, self))
+                _LOG.info("On value changed callback added {} {} {}".format(can_id, attrib, idx))
+        else:
+            _LOG.warning("Module not known: {:08x}".format(can_id))
 
     @property
     def modules(self):
@@ -462,3 +465,12 @@ class ModuleManager:
     def get_module(self, can_id):
         """Get the module from CAN ID."""
         return self._can_id_map_to_module.get(can_id)
+
+    def get_attributes(self, can_id, attribute):
+        """Generate the module attributes."""
+        mod = self.get_module(can_id)
+        if mod:
+            for (attr, index, _) in mod.get_attributes():
+                if attr == attribute:
+                    yield attribute, index
+
