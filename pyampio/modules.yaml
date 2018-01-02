@@ -6,6 +6,14 @@
 #   code: <internal module code number>
 #   protocol: <protocol_version> 'any' matches any
 #   software_version: [<list of software versions>] - empty list means any
+#   description: Module description free text
+#   attributes:
+#     <Broadcast Type>:  - The broadcast as defined in broadcast.py file
+#     - name: <name of the attribute>
+#     - base: the base index
+#     - min: the lowest index of the value inside the broadcast
+#     - max: the highest index of the value inside the broadcast
+#     - converter: the converter function name (see the converters.py for the names)
 
 MROL-4s:
   code: 0x03
@@ -950,62 +958,62 @@ MCON-232SATEL:
         min: 1
         max: 32
     SatelInput1T48:
-      - name: input
+      - name: bin_input
         base: 1
         min: 1
         max: 48
     SatelInput49T96:
-      - name: input
+      - name: bin_input
         base: 49
         min: 1
         max: 48
     SatelInput97T128:
-      - name: input
+      - name: bin_input
         base: 97
         min: 1
         max: 32
     SatelInput129T176:
-      - name: input
+      - name: bin_input
         base: 129
         min: 1
         max: 48
     SatelInput177T224:
-      - name: input
+      - name: bin_input
         base: 177
         min: 1
         max: 48
     SatelInput225T256:
-      - name: input
+      - name: bin_input
         base: 225
         min: 1
         max: 32
     SatelOutput1T48:
-      - name: output
+      - name: bin_output
         base: 1
         min: 1
         max: 48
     SatelOutput49T96:
-      - name: output
+      - name: bin_output
         base: 49
         min: 1
         max: 48
     SatelOutput97T128:
-      - name: output
+      - name: bin_output
         base: 97
         min: 1
         max: 32
     SatelOutput129T176:
-      - name: output
+      - name: bin_output
         base: 129
         min: 1
         max: 48
     SatelOutput177T224:
-      - name: output
+      - name: bin_output
         base: 177
         min: 1
         max: 48
     SatelOutput225T256:
-      - name: output
+      - name: bin_output
         base: 225
         min: 1
         max: 32
