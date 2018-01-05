@@ -45,6 +45,7 @@ setup(name=pkg_name,
       packages=find_packages(exclude=['tests']),
       keywords='ampio automation can',
       install_requires=['pyserial==3.4', 'pyserial-asyncio==0.4', 'PyYAML==3.12', 'voluptuous==0.10.5', 'click==6.7'],
+      include_package_data=True,
       data_files=[('pyampio', ['pyampio/modules.yaml'])],
       zip_safe=False,
       entry_points={
