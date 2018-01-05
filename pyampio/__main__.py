@@ -28,7 +28,9 @@ def on_value_changed(modules, can_id, attribute, index, old_value, new_value, un
     """
     mod = modules.get_module(can_id)
     if mod:
-        print("{:08x}/{:08x} {:16} {:32} {}({}) changed {}{}->{}{}".format(mod.physical_can_id, can_id, mod.part_number, mod.name, attribute, index, old_value, unit, new_value, unit))
+        print("{:08x}/{:08x} {:16} {:32} {}({}) changed {}{}->{}{}".format(
+            mod.physical_can_id, can_id, mod.part_number, mod.name, attribute, index, old_value, unit, new_value, unit)
+        )
 
 
 def on_discovered(modules):
@@ -40,6 +42,7 @@ def on_discovered(modules):
     # Subscribe to all values
     for can_id, mod in modules.modules.items():
         modules.add_on_value_changed_callback(can_id=can_id, attribute=None, index=None, callback=on_value_changed)
+    # modules.add_on_value_changed_callback(can_id=0x1ecc, attribute='bin_input', index=9, callback=on_value_changed)
 
 
 log_levels = {

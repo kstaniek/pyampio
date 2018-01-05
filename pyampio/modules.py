@@ -1,11 +1,12 @@
 """This is a module implementing the Ampio Module class."""
 
 import yaml
+import re
 from functools import partial
 from collections import defaultdict
 from pyampio.broadcast import BroadcastCache
 from pyampio.broadcast import BroadcastTypes # noqa
-from pyampio.converters import convert_temperature, convert_weekday, convert_meteo  # noqa
+from pyampio.converters import convert_temperature, convert_weekday, convert_meteo, convert_temperature_int  # noqa
 import logging
 from voluptuous import Schema, Required, All, Lower, Any, Optional, Coerce, Invalid
 
@@ -37,11 +38,17 @@ class AmpioModule:
         self.part_number = part_number
         self.description = description
         self.attributes = attributes
+        # (attribute, index) -> (broadcast, index, unit) map
+        self.map = {}
         self._broadcasts = {}
         self._broadcast_cache = BroadcastCache(self.on_change)
+        # TODO: Remove
         self._callbacks = defaultdict(list)
+        self._state_update_callbacks = defaultdict(list)
         self._name_parts = [""] * 6
         self._details_flag = 0x00
+
+        self._make_attribute_map()
 
     def __str__(self):
         """Return the string representation of the module details."""
@@ -153,6 +160,19 @@ class AmpioModule:
                 self.can_id, onewires, sub_procs, sub_type, mask))
             self._details_flag |= 0x80
 
+    def state_changed(self, attribute, index):
+        """Fire the state changed callback."""
+        callbacks = self._state_update_callbacks.get((attribute, index))
+        if callbacks:
+            for callback in callbacks:
+                callback()
+
+    def register_state_changed_callback(self, attribute, index, callback):
+        """Register calback for attribute state change."""
+        self._state_update_callbacks[(attribute, index)].append(callback)
+        return
+
+    # TODO: Remove
     def update_listeners(self, attribute, index, old_value, new_value, unit=""):
         """Fire the callback for attribute change listeners."""
         callbacks = self._callbacks.get((attribute, index))
@@ -190,6 +210,7 @@ class AmpioModule:
 
     def on_change(self, broadcast_type, data):
         """Handle the on change event when attribute has changed."""
+        # TODO: use map
         _LOG.debug("ON CHANGE: {:08x} {}: {}".format(self.can_id, broadcast_type, data))
         details = self.attributes.get(broadcast_type.value)
         if details:
@@ -209,7 +230,9 @@ class AmpioModule:
                         old_value = converter(old_value)
                         new_value = converter(new_value)
                     _LOG.debug("Changed {}({}) {}{}->{}{}".format(name, converted_index, old_value, unit, new_value, unit))
+                    # remove
                     self.update_listeners(name, converted_index, old_value=old_value, new_value=new_value, unit=unit)
+                    self.state_changed(attribute=name, index=converted_index)
 
     def get_attributes(self):
         """Generate the attribute names for module."""
@@ -224,6 +247,26 @@ class AmpioModule:
                 for index in range(min_broadcast_index, max_broadcast_index + 1):
                     conv_index = index - min_broadcast_index + base
                     yield name, conv_index, unit
+
+    def _make_attribute_map(self):
+        for broadcast_type, broadcast_details in self.attributes.items():
+            for broadcast_detail in broadcast_details:
+                attribute = broadcast_detail['name']
+                base = broadcast_detail['base']
+                min_broadcast_index = broadcast_detail['min']
+                max_broadcast_index = broadcast_detail['max']
+                unit = broadcast_detail['unit']
+                for index in range(min_broadcast_index, max_broadcast_index + 1):
+                    absolute_index = index - min_broadcast_index + base
+                    self.map[(attribute, absolute_index)] = (BroadcastTypes(broadcast_type), index, unit)
+
+    def get_state(self, attribute, index):
+        """Return the item state."""
+        broadcast_type, index, unit = self.map.get((attribute, index), (None, None, None))
+        if broadcast_type is not None:
+            return self._broadcast_cache.get_value(broadcast_type, index)
+        else:
+            return None
 
 
 def load_yaml(file_path):
@@ -442,17 +485,38 @@ class ModuleManager:
         mod.broadcast_received(can_data)
 
     def add_on_value_changed_callback(self, can_id, attribute, index, callback):
+        # TODO: Remove
         """Add the on value changed callback."""
         mod = self.get_module(can_id)
         if mod:
-            if attribute is None:
-                for (attribute, index, unit) in mod.get_attributes():
-                    mod.add_listener(attribute, index, partial(callback, self))
-                    _LOG.debug("On value changed callback added {} {} {}".format(can_id, attribute, index))
+            for (attrib, idx, unit) in mod.get_attributes():
+                if attribute is not None:
+                    if attribute != attrib:
+                        continue
+                if index is not None:
+                    if index != idx:
+                        continue
+                mod.add_listener(attrib, idx, partial(callback, self))
+                _LOG.info("On value changed callback added {} {} {}".format(can_id, attrib, idx))
+        else:
+            _LOG.warning("Module not known: {:08x}".format(can_id))
 
-            else:
-                _LOG.debug("On value changed callback added {} {} {}".format(can_id, attribute, index))
-                mod.add_listener(attribute, index, partial(callback, self))
+    def register_on_value_changed_callback(self, can_id, attribute, index, callback):
+        """Register on value change_callback."""
+        mod = self.get_module(can_id)
+        attribute_re = re.compile(attribute)
+        if mod:
+            for (attrib, idx, unit) in mod.get_attributes():
+                if attribute is not None:
+                    if attribute_re.match(attrib) is None:
+                        continue
+                if index is not None:
+                    if index != idx:
+                        continue
+                mod.register_state_changed_callback(attrib, idx, callback)
+                _LOG.info("On value changed callback added {} {} {}".format(can_id, attrib, idx))
+        else:
+            _LOG.warning("Module not known: {:08x}".format(can_id))
 
     @property
     def modules(self):
@@ -462,3 +526,19 @@ class ModuleManager:
     def get_module(self, can_id):
         """Get the module from CAN ID."""
         return self._can_id_map_to_module.get(can_id)
+
+    def get_attributes(self, can_id, attribute):
+        """Generate the module attributes."""
+        mod = self.get_module(can_id)
+        if mod:
+            for (attr, index, _) in mod.get_attributes():
+                if attr == attribute:
+                    yield attribute, index
+
+    def get_state(self, can_id, attribute, index):
+        """Return item state."""
+        mod = self.get_module(can_id)
+        if mod:
+            return mod.get_state(attribute, index)
+        else:
+            return None

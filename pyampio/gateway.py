@@ -48,8 +48,7 @@ class AmpioGateway:
         )
         self.protocol = None
         self._state = GatewayState.INIT
-
-        self._loop.run_until_complete(self._protocol_coro)
+        asyncio.ensure_future(self._protocol_coro, loop=self._loop)
 
     @property
     def state(self):
@@ -155,3 +154,19 @@ class AmpioGateway:
         for can_id, mod in self._modules.modules.items():
             _LOG.info(mod)
         _LOG.info("Attribute names discovered")
+
+    def register_on_value_change_callback(self, can_id, attribute, index, callback):
+        """Register the value changed callback."""
+        self._modules.register_on_value_changed_callback(can_id, attribute, index, callback)
+
+    def get_item_state(self, can_id, attribute, index):
+        """Return the item state from ampio module."""
+        return self._modules.get_state(can_id, attribute, index)
+
+    def get_module_name(self, can_id):
+        """Return Ampio module name."""
+        return self._modules.get_module(can_id).name
+
+    def get_module_part_number(self, can_id):
+        """Return Ampio module part number."""
+        return self._modules.get_module(can_id).part_number

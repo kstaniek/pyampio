@@ -6,6 +6,14 @@
 #   code: <internal module code number>
 #   protocol: <protocol_version> 'any' matches any
 #   software_version: [<list of software versions>] - empty list means any
+#   description: Module description free text
+#   attributes:
+#     <Broadcast Type>:  - The broadcast as defined in broadcast.py file
+#     - name: <name of the attribute>
+#     - base: the base index
+#     - min: the lowest index of the value inside the broadcast
+#     - max: the highest index of the value inside the broadcast
+#     - converter: the converter function name (see the converters.py for the names)
 
 MROL-4s:
   code: 0x03
@@ -45,14 +53,39 @@ MROL-4s:
         max: 4
         unit: "%"
     BinInOut:
-      - name: bin_output
+      - name: closing
         base: 1
         min: 25
-        max: 28
-      - name: bin_input
+        max: 25
+      - name: closing
+        base: 2
+        min: 27
+        max: 27
+      - name: closing
+        base: 3
+        min: 29
+        max: 29
+      - name: closing
+        base: 4
+        min: 31
+        max: 31
+      - name: opening
         base: 1
-        min: 1
-        max: 4
+        min: 26
+        max: 26
+      - name: opening
+        base: 2
+        min: 28
+        max: 28
+      - name: opening
+        base: 3
+        min: 30
+        max: 30
+      - name: opening
+        base: 4
+        min: 32
+        max: 32
+
 
 MPR-8s:
   code: 0x04
@@ -261,19 +294,19 @@ MRGBu-1:
         unit: "C"
         converter: convert_temperature
     Analog1T6:
-      - name: red
+      - name: color_red
         base: 1
         min: 1
         max: 1
-      - name: green
+      - name: color_green
         base: 1
         min: 2
         max: 2
-      - name: blue
+      - name: color_blue
         base: 1
         min: 3
         max: 3
-      - name: white
+      - name: output
         base: 1
         min: 4
         max: 4
@@ -288,12 +321,12 @@ MRGBu-1:
         max: 26
       - name: bin_blue
         base: 1
-        min: 26
-        max: 26
-      - name: bin_white
-        base: 1
         min: 27
         max: 27
+      - name: bin_output
+        base: 1
+        min: 28
+        max: 28
 
 MLED-1:
   code: 0x11
@@ -950,62 +983,62 @@ MCON-232SATEL:
         min: 1
         max: 32
     SatelInput1T48:
-      - name: input
+      - name: bin_input
         base: 1
         min: 1
         max: 48
     SatelInput49T96:
-      - name: input
+      - name: bin_input
         base: 49
         min: 1
         max: 48
     SatelInput97T128:
-      - name: input
+      - name: bin_input
         base: 97
         min: 1
         max: 32
     SatelInput129T176:
-      - name: input
+      - name: bin_input
         base: 129
         min: 1
         max: 48
     SatelInput177T224:
-      - name: input
+      - name: bin_input
         base: 177
         min: 1
         max: 48
     SatelInput225T256:
-      - name: input
+      - name: bin_input
         base: 225
         min: 1
         max: 32
     SatelOutput1T48:
-      - name: output
+      - name: bin_output
         base: 1
         min: 1
         max: 48
     SatelOutput49T96:
-      - name: output
+      - name: bin_output
         base: 49
         min: 1
         max: 48
     SatelOutput97T128:
-      - name: output
+      - name: bin_output
         base: 97
         min: 1
         max: 32
     SatelOutput129T176:
-      - name: output
+      - name: bin_output
         base: 129
         min: 1
         max: 48
     SatelOutput177T224:
-      - name: output
+      - name: bin_output
         base: 177
         min: 1
         max: 48
     SatelOutput225T256:
-      - name: output
+      - name: bin_output
         base: 225
         min: 1
         max: 32

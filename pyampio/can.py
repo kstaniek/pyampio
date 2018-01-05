@@ -13,7 +13,10 @@ _LOG = logging.getLogger(__name__)
 class Type(Enum):
     """This is a frame type enum for USB CAN module frames."""
 
+    # send can frame
     CAN = 0x00
+    # send API function to module
+    API_FUNCTION = 0x12
 
 
 class CanType(Enum):
@@ -64,6 +67,8 @@ class AmpioCanProtocol(asyncio.Protocol):
         self.transport = transport
         _LOG.debug('port opened')
         self.transport.serial.rts = False
+        self.transport.serial.reset_input_buffer()
+        self.transport.serial.reset_output_buffer()
         if self._on_connected:
             self.transport._loop.create_task(self._on_connected(self))
 
@@ -105,6 +110,18 @@ class AmpioCanProtocol(asyncio.Protocol):
         """
         can_id_bytes = can_id.to_bytes(4, byteorder='big')
         self.send_can_frame(0x0f000000, bytearray(can_id_bytes + b'\x08'))
+
+    def send_api_function(self, can_id, api_func, data):
+        """Send API function to module.
+
+        Args:
+            can_id (int): CAN ID
+            api_func (int): API function
+            data (bytearray): Data
+
+        """
+        func_bytes = api_func.to_bytes(1, byteorder='big')
+        self.send_frame(Type.API_FUNCTION, can_id, bytearray(func_bytes + data))
 
     def send_can_frame(self, can_id, data):
         """Send the CAN frame.
@@ -208,6 +225,7 @@ class AmpioCanProtocol(asyncio.Protocol):
             else:
                 # walk through the buffer trying to find preamble 0x2dd4
                 _LOG.warning("Synchronization error. Trying to find a frame preamble")
+                _LOG.warning(data)
                 data = data[1:]
                 data_length -= 1
                 # anyway can't assemble frame - resetting the assembly buffer
