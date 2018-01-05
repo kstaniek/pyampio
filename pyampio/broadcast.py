@@ -146,8 +146,15 @@ class BroadcastCache:
             raise
 
     def get_value(self, broadcast_type, index):
-        """Get the value state from broadcast."""
-        return self._cache[broadcast_type].state(index)
+        """Get the value state from broadcast.
+
+        Returns: value state or None if not received yet
+        """
+        broadcast_object = self._cache.get(broadcast_type, None)
+        if broadcast_object:
+            return broadcast_object.state(index)
+        else:
+            return None
 
 
 class BroadcastBinary(metaclass=BroadcastMeta):
@@ -215,8 +222,8 @@ class BroadcastValue8b(metaclass=BroadcastMeta):
 
     def __init__(self, data=None):
         """Initialize BroadcastValue8b class from frame data."""
-        self._values = [0] * 6
-        self._previous_values = [0] * 6
+        self._values = [None] * 6
+        self._previous_values = [None] * 6
         if data:
             self.update(data)
 
@@ -304,7 +311,11 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
         value = int.from_bytes(data[2:], byteorder="little", signed=False)
         self._previous_values[index] = self._values.get(index, 0)
         self._values[index] = value
-        self._last_changed_index = index
+        if self._previous_values[index] != self._values[index]:
+            self._last_changed_index = index
+        else:
+            self._last_changed_index = None
+
         _LOG.debug("Value 32b: Index {} Value {}".format(index + 1, value))
 
     def state(self, index):
@@ -317,8 +328,9 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
 
     def changes(self):
         """Yield the value changes in broadcast data."""
-        yield self._last_changed_index + 1, self._previous_values[self._last_changed_index], \
-            self._values[self._last_changed_index]
+        if self._last_changed_index:
+            yield self._last_changed_index + 1, self._previous_values[self._last_changed_index], \
+                self._values[self._last_changed_index]
 
 
 class BroadcastHeatingZone(metaclass=BroadcastMeta):
