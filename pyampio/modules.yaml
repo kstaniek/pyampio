@@ -53,14 +53,39 @@ MROL-4s:
         max: 4
         unit: "%"
     BinInOut:
-      - name: bin_output
+      - name: closing
         base: 1
         min: 25
-        max: 28
-      - name: bin_input
+        max: 25
+      - name: closing
+        base: 2
+        min: 27
+        max: 27
+      - name: closing
+        base: 3
+        min: 29
+        max: 29
+      - name: closing
+        base: 4
+        min: 31
+        max: 31
+      - name: opening
         base: 1
-        min: 1
-        max: 4
+        min: 26
+        max: 26
+      - name: opening
+        base: 2
+        min: 28
+        max: 28
+      - name: opening
+        base: 3
+        min: 30
+        max: 30
+      - name: opening
+        base: 4
+        min: 32
+        max: 32
+
 
 MPR-8s:
   code: 0x04
@@ -269,19 +294,19 @@ MRGBu-1:
         unit: "C"
         converter: convert_temperature
     Analog1T6:
-      - name: red
+      - name: color_red
         base: 1
         min: 1
         max: 1
-      - name: green
+      - name: color_green
         base: 1
         min: 2
         max: 2
-      - name: blue
+      - name: color_blue
         base: 1
         min: 3
         max: 3
-      - name: white
+      - name: output
         base: 1
         min: 4
         max: 4
@@ -296,12 +321,12 @@ MRGBu-1:
         max: 26
       - name: bin_blue
         base: 1
-        min: 26
-        max: 26
-      - name: bin_white
-        base: 1
         min: 27
         max: 27
+      - name: bin_output
+        base: 1
+        min: 28
+        max: 28
 
 MLED-1:
   code: 0x11
