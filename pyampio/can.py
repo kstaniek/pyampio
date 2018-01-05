@@ -67,6 +67,8 @@ class AmpioCanProtocol(asyncio.Protocol):
         self.transport = transport
         _LOG.debug('port opened')
         self.transport.serial.rts = False
+        self.transport.serial.reset_input_buffer()
+        self.transport.serial.reset_output_buffer()
         if self._on_connected:
             self.transport._loop.create_task(self._on_connected(self))
 
