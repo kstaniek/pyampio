@@ -39,8 +39,8 @@ setup(name=pkg_name,
           'Programming Language :: Python',
           'Programming Language :: Python :: 3 :: Only'
           'Programming Language :: Python :: 3.4',
-          'Programming Language :: Python :: 3.5'
-          'Programming Language :: Python :: 3.6'
+          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
       ],
       packages=find_packages(exclude=['tests']),
       keywords='ampio automation can',
