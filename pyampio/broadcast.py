@@ -149,6 +149,7 @@ class BroadcastCache:
         """Get the value state from broadcast.
 
         Returns: value state or None if not received yet
+
         """
         broadcast_object = self._cache.get(broadcast_type, None)
         if broadcast_object:

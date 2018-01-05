@@ -261,6 +261,7 @@ class AmpioModule:
                     self.map[(attribute, absolute_index)] = (BroadcastTypes(broadcast_type), index, unit)
 
     def get_state(self, attribute, index):
+        """Return the item state."""
         broadcast_type, index, unit = self.map.get((attribute, index), (None, None, None))
         if broadcast_type is not None:
             return self._broadcast_cache.get_value(broadcast_type, index)
@@ -535,6 +536,7 @@ class ModuleManager:
                     yield attribute, index
 
     def get_state(self, can_id, attribute, index):
+        """Return item state."""
         mod = self.get_module(can_id)
         if mod:
             return mod.get_state(attribute, index)
