@@ -376,7 +376,7 @@ class BroadcastHeatingZone(metaclass=BroadcastMeta):
         # day_mode
         self._values[5] = bool(zone_params & 0x04)
         # mode
-        self._values[6] = bool(zone_params & 0x70)
+        self._values[6] = int(zone_params & 0x70)
         _LOG.debug("Heating Zone Update: {}".format(self._values))
 
     def state(self, index):
