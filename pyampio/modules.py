@@ -226,7 +226,6 @@ class AmpioModule:
                 converted_index = index - min_index + base
                 if min_index <= index <= max_index:
                     if converter is not None:
-                        pass
                         old_value = converter(old_value)
                         new_value = converter(new_value)
                     _LOG.debug("Changed {}({}) {}{}->{}{}".format(name, converted_index, old_value, unit, new_value, unit))
@@ -256,17 +255,26 @@ class AmpioModule:
                 min_broadcast_index = broadcast_detail['min']
                 max_broadcast_index = broadcast_detail['max']
                 unit = broadcast_detail['unit']
+                converter = broadcast_detail['converter']
                 for index in range(min_broadcast_index, max_broadcast_index + 1):
                     absolute_index = index - min_broadcast_index + base
-                    self.map[(attribute, absolute_index)] = (BroadcastTypes(broadcast_type), index, unit)
+                    self.map[(attribute, absolute_index)] = (BroadcastTypes(broadcast_type), index, unit, converter)
 
     def get_state(self, attribute, index):
         """Return the item state."""
-        broadcast_type, index, unit = self.map.get((attribute, index), (None, None, None))
+        broadcast_type, index, unit, converter = self.map.get((attribute, index), (None, None, None, None))
         if broadcast_type is not None:
-            return self._broadcast_cache.get_value(broadcast_type, index)
+            value = self._broadcast_cache.get_value(broadcast_type, index)
+            if value is not None:
+                value = converter(value)
+            return value
         else:
             return None
+
+    def get_measurement_unit(self, attribute, index):
+        """Return measurement unit."""
+        _, _, unit, _ = self.map.get((attribute, index), (None, None, None, None))
+        return unit
 
 
 def load_yaml(file_path):
@@ -540,5 +548,13 @@ class ModuleManager:
         mod = self.get_module(can_id)
         if mod:
             return mod.get_state(attribute, index)
+        else:
+            return None
+
+    def get_measurement_unit(self, can_id, attribute, index):
+        """Return measurement unit."""
+        mod = self.get_module(can_id)
+        if mod:
+            return mod.get_measurement_unit(attribute, index)
         else:
             return None

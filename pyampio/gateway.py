@@ -163,6 +163,10 @@ class AmpioGateway:
         """Return the item state from ampio module."""
         return self._modules.get_state(can_id, attribute, index)
 
+    def get_item_measurement_unit(self, can_id, attribute, index):
+        """Return the item measurement unit."""
+        return self._modules.get_measurement_unit(can_id, attribute, index)
+
     def get_module_name(self, can_id):
         """Return Ampio module name."""
         return self._modules.get_module(can_id).name
