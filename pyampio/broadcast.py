@@ -302,7 +302,6 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
         """Initialize BroadcastValue32b class from frame data."""
         self._values = {}
         self._previous_values = {}
-        self._last_changed_index = None
         if data:
             self.update(data)
 
@@ -312,11 +311,6 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
         value = int.from_bytes(data[2:], byteorder="little", signed=False)
         self._previous_values[index] = self._values.get(index, 0)
         self._values[index] = value
-        if self._previous_values[index] != self._values[index]:
-            self._last_changed_index = index
-        else:
-            self._last_changed_index = None
-
         _LOG.debug("Value 32b: Index {} Value {}".format(index + 1, value))
 
     def state(self, index):
@@ -329,9 +323,9 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
 
     def changes(self):
         """Yield the value changes in broadcast data."""
-        if self._last_changed_index:
-            yield self._last_changed_index + 1, self._previous_values[self._last_changed_index], \
-                self._values[self._last_changed_index]
+        for index in self._values.keys():
+            if self._previous_values[index] != self._values[index]:
+                yield index + 1, self._previous_values[index], self._values[index]
 
 
 class BroadcastHeatingZone(metaclass=BroadcastMeta):
