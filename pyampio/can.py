@@ -13,10 +13,10 @@ _LOG = logging.getLogger(__name__)
 class Type(Enum):
     """This is a frame type enum for USB CAN module frames."""
 
-    # send can frame
+    # send raw can frame
     CAN = 0x00
-    # send API function to module
-    API_FUNCTION = 0x12
+    SEND_VALUE_WITH_MASK = 0x10
+    SEND_VALUE_WITH_INDEX = 0x11
 
 
 class CanType(Enum):
@@ -66,7 +66,9 @@ class AmpioCanProtocol(asyncio.Protocol):
         """Protocol connection made."""
         self.transport = transport
         _LOG.debug('port opened')
-        self.transport.serial.rts = False
+        self.transport.serial.rts = True
+        self.transport.serial.dtr = True
+        self.transport.serial.write_timeout = 10
         self.transport.serial.reset_input_buffer()
         self.transport.serial.reset_output_buffer()
         if self._on_connected:
@@ -77,51 +79,29 @@ class AmpioCanProtocol(asyncio.Protocol):
         """Protocol connection open."""
         _LOG.debug("Opening connection")
 
-    def send_module_discovery(self):
-        """Send the module discovery frame."""
-        self.send_can_frame(0x0f000000, b'\xff')
-
-    def send_module_name_discovery(self, can_id):
-        """Send the module name discovery frame.
-
-        Args:
-            can_id (int): CAN ID
-
-        """
-        can_id_bytes = can_id.to_bytes(4, byteorder='big')
-        self.send_can_frame(0x0f000000, bytearray(can_id_bytes + b'\x01'))
-
-    def send_module_details_discovery(self, can_id):
-        """Send the module details discovery frame.
-
-        Args:
-            can_id (int): CAN ID
-
-        """
-        can_id_bytes = can_id.to_bytes(4, byteorder='big')
-        self.send_can_frame(0x0f000000, bytearray(can_id_bytes + b'\x03'))
-
-    def send_attribute_names_discovery(self, can_id):
-        """Send the module attribute names discovery frame.
-
-        Args:
-            can_id (int): CAN ID
-
-        """
-        can_id_bytes = can_id.to_bytes(4, byteorder='big')
-        self.send_can_frame(0x0f000000, bytearray(can_id_bytes + b'\x08'))
-
-    def send_api_function(self, can_id, api_func, data):
+    def send_api_function(self, api_func, can_id, data):
         """Send API function to module.
 
         Args:
-            can_id (int): CAN ID
             api_func (int): API function
+            can_id (int): CAN ID
             data (bytearray): Data
 
         """
-        func_bytes = api_func.to_bytes(1, byteorder='big')
-        self.send_frame(Type.API_FUNCTION, can_id, bytearray(func_bytes + data))
+        self.send_frame(api_func, can_id, bytearray(data))
+
+    def send_module_command(self, func, gateway_can_id, can_id=None):
+        """Send module command.
+
+        Args:
+            own_can_id (int): own can Id
+            can_id (int): destination module can id
+            func (int): module function number
+
+        """
+        data = can_id.to_bytes(4, byteorder='big') + func.to_bytes(1, byteorder='big') if can_id else \
+            func.to_bytes(1, byteorder='big')
+        self.send_can_frame(gateway_can_id, data)
 
     def send_can_frame(self, can_id, data):
         """Send the CAN frame.
@@ -154,7 +134,7 @@ class AmpioCanProtocol(asyncio.Protocol):
         frame[-1] = sum(frame[:-1]) & 0xff
         self.transport.write(frame)
         can_data_str = " ".join(["{:02x}".format(c) for c in frame])
-        _LOG.debug("CAN OUT: frame=[{}]".format(can_data_str))
+        _LOG.debug("CAN SERIAL OUT: frame=[{}]".format(can_data_str))
 
     @asyncio.coroutine
     def _process_frame(self, frame):
@@ -199,10 +179,10 @@ class AmpioCanProtocol(asyncio.Protocol):
 
     def data_received(self, data):
         """Process received raw data from the wire."""
-        _LOG.debug("-" * 20)
-        _LOG.debug('Data received: {!r}'.format(data.hex()))
-        _LOG.debug('Assembly buffer: {!r}'.format(self._assembly_buffer.hex()))
-        _LOG.debug("-" * 20)
+        # _LOG.debug("-" * 20)
+        # _LOG.debug('Data received: {!r}'.format(data.hex()))
+        # _LOG.debug('Assembly buffer: {!r}'.format(self._assembly_buffer.hex()))
+        # _LOG.debug("-" * 20)
         data = self._assembly_buffer + data
         data_length = len(data)
         while data_length > 3:
@@ -214,7 +194,7 @@ class AmpioCanProtocol(asyncio.Protocol):
                 frame = data[:frame_length]
                 crc = sum(frame[:-1]) & 0xff
                 if crc == frame[-1]:
-                    _LOG.debug("Data: {!r}".format(frame.hex()))
+                    # _LOG.debug("Data: {!r}".format(frame.hex()))
                     frame = frame[2:-1]
                     self.transport._loop.create_task(self._process_frame(frame))
                 else:
