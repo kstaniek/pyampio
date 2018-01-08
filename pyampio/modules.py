@@ -4,6 +4,7 @@ import yaml
 import re
 from functools import partial
 from collections import defaultdict
+import datetime as dt
 from pyampio.broadcast import BroadcastCache
 from pyampio.broadcast import BroadcastTypes # noqa
 from pyampio.converters import convert_temperature, convert_weekday, convert_meteo, convert_temperature_int  # noqa
@@ -11,6 +12,8 @@ import logging
 from voluptuous import Schema, Required, All, Lower, Any, Optional, Coerce, Invalid
 
 _LOG = logging.getLogger(__name__)
+
+QUERY_MODULE_DETAILS_TIMEOUT_SECONDS = 2
 
 
 class AmpioModule:
@@ -271,6 +274,17 @@ class AmpioModule:
         else:
             return None
 
+    def get_last_state(self, attribute, index):
+        """Return the item last state."""
+        broadcast_type, index, unit, converter = self.map.get((attribute, index), (None, None, None, None))
+        if broadcast_type is not None:
+            value = self._broadcast_cache.get_last_value(broadcast_type, index)
+            if value is not None:
+                value = converter(value)
+            return value
+        else:
+            return None
+
     def get_measurement_unit(self, attribute, index):
         """Return measurement unit."""
         _, _, unit, _ = self.map.get((attribute, index), (None, None, None, None))
@@ -396,13 +410,21 @@ class ModuleFactory:
                            part_number=matched_pn, description=description, attributes=attributes)
 
 
-class ModuleManager:
+class AmpioModules:
     """This is a ModuleManager class implementation."""
 
     def __init__(self):
         """Initialize the :class: pyampio.modules.ModuleManager object."""
         self._modules = {}
         self._can_id_map_to_module = {}
+
+    def __len__(self):
+        """Return the number of modules."""
+        return len(self._modules)
+
+    def __iter__(self):
+        """Iterate over module dictionary."""
+        return iter(dict(self._modules).items())
 
     def add_module(self, can_id, can_data):
         """Add new module.
@@ -468,14 +490,20 @@ class ModuleManager:
 
     def is_details_updated(self, can_id):
         """Return true if module details are updated else yield."""
+        start_time = dt.datetime.now()
         mod = self._modules.get(can_id)
         if mod:
-            while not mod.is_details_complete:
+            while not mod.is_details_complete and \
+                    (dt.datetime.now() - start_time).seconds < QUERY_MODULE_DETAILS_TIMEOUT_SECONDS:
                 yield
+        if (dt.datetime.now() - start_time).seconds >= QUERY_MODULE_DETAILS_TIMEOUT_SECONDS:
+            _LOG.warning("Query took more than {} seconds: {}".format(
+                QUERY_MODULE_DETAILS_TIMEOUT_SECONDS, mod))
         return True
 
     def is_attribute_names_updated(self, can_id):
         """Return true if attribute name are updated else yield."""
+        # TODO: Implementation needed
         while True:
             yield
 
@@ -505,7 +533,7 @@ class ModuleManager:
                     if index != idx:
                         continue
                 mod.add_listener(attrib, idx, partial(callback, self))
-                _LOG.info("On value changed callback added {} {} {}".format(can_id, attrib, idx))
+                _LOG.debug("On value changed callback added {} {} {}".format(can_id, attrib, idx))
         else:
             _LOG.warning("Module not known: {:08x}".format(can_id))
 
@@ -522,7 +550,7 @@ class ModuleManager:
                     if index != idx:
                         continue
                 mod.register_state_changed_callback(attrib, idx, callback)
-                _LOG.info("On value changed callback added {} {} {}".format(can_id, attrib, idx))
+                _LOG.debug("On value changed callback added {} {} {}".format(can_id, attrib, idx))
         else:
             _LOG.warning("Module not known: {:08x}".format(can_id))
 
@@ -551,10 +579,34 @@ class ModuleManager:
         else:
             return None
 
+    def get_last_state(self, can_id, attribute, index):
+        """Return item last state."""
+        mod = self.get_module(can_id)
+        if mod:
+            return mod.get_last_state(attribute, index)
+        else:
+            return None
+
     def get_measurement_unit(self, can_id, attribute, index):
         """Return measurement unit."""
         mod = self.get_module(can_id)
         if mod:
             return mod.get_measurement_unit(attribute, index)
+        else:
+            return None
+
+    def get_module_name(self, can_id):
+        """Return module name."""
+        mod = self.get_module(can_id)
+        if mod:
+            return mod.name
+        else:
+            return None
+
+    def get_module_part_number(self, can_id):
+        """Return module name."""
+        mod = self.get_module(can_id)
+        if mod:
+            return mod.part_number
         else:
             return None
