@@ -157,6 +157,18 @@ class BroadcastCache:
         else:
             return None
 
+    def get_last_value(self, broadcast_type, index):
+        """Get the value state from broadcast.
+
+        Returns: value state or None if not received yet
+
+        """
+        broadcast_object = self._cache.get(broadcast_type, None)
+        if broadcast_object:
+            return broadcast_object.last_state(index)
+        else:
+            return None
+
 
 class BroadcastBinary(metaclass=BroadcastMeta):
     """This is a BroadcastBinary class representing binary data frames."""
@@ -207,6 +219,10 @@ class BroadcastBinary(metaclass=BroadcastMeta):
         """Return the current value state from broadcast."""
         return bool(self._value & (0x1 << (index - 1)))
 
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        return bool(self._previous_value & (0x1 << (index - 1)))
+
 
 class BroadcastValue8b(metaclass=BroadcastMeta):
     """This is a BroadcastValue8b class representing 8-bit data frames."""
@@ -248,6 +264,14 @@ class BroadcastValue8b(metaclass=BroadcastMeta):
             return None
         return None
 
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        try:
+            return self._previous_values[index - 1]
+        except IndexError:
+            return None
+        return None
+
 
 class BroadcastValue16b(metaclass=BroadcastMeta):
     """This is a BroadcastValue16b class representing 16-bit data frames."""
@@ -280,6 +304,14 @@ class BroadcastValue16b(metaclass=BroadcastMeta):
         """Return the current value state from broadcast."""
         try:
             return self._values[index - 1]
+        except IndexError:
+            return None
+        return None
+
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        try:
+            return self._previous_values[index - 1]
         except IndexError:
             return None
         return None
@@ -317,6 +349,14 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
         """Return the current value state from broadcast."""
         try:
             return self._values[index - 1]
+        except IndexError:
+            return None
+        return None
+
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        try:
+            return self._previous_values[index - 1]
         except IndexError:
             return None
         return None
@@ -376,13 +416,21 @@ class BroadcastHeatingZone(metaclass=BroadcastMeta):
         # day_mode
         self._values[5] = bool(zone_params & 0x04)
         # mode
-        self._values[6] = bool(zone_params & 0x70)
+        self._values[6] = int(zone_params & 0x70)
         _LOG.debug("Heating Zone Update: {}".format(self._values))
 
     def state(self, index):
         """Return the current value state from broadcast."""
         try:
             return self._values[index - 1]
+        except IndexError:
+            return None
+        return None
+
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        try:
+            return self._previous_values[index - 1]
         except IndexError:
             return None
         return None
@@ -432,7 +480,19 @@ class BroadcastDateTime(metaclass=BroadcastMeta):
 
     def state(self, index):
         """Return the current value state from broadcast."""
-        return self._values[index - 1]
+        try:
+            return self._values[index - 1]
+        except IndexError:
+            return None
+        return None
+
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        try:
+            return self._previous_values[index - 1]
+        except IndexError:
+            return None
+        return None
 
     def changes(self):
         """Yield the value changes in broadcast data."""
@@ -466,6 +526,14 @@ class BroadcastEvent(metaclass=BroadcastMeta):
         """Return the current value state from broadcast."""
         try:
             return self._values[index]
+        except IndexError:
+            return None
+        return None
+
+    def last_state(self, index):
+        """Return the last value state from broadcast."""
+        try:
+            return self._previous_values[index - 1]
         except IndexError:
             return None
         return None

@@ -50,7 +50,7 @@ setup(name=pkg_name,
       zip_safe=False,
       entry_points={
           'console_scripts': [
-              'ampio = pyampio.__main__:run',
+              'ampio = pyampio.__main__:cli',
           ]
       }
 )

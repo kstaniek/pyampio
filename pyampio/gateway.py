@@ -3,9 +3,9 @@
 import asyncio
 import logging
 from serial_asyncio import create_serial_connection
-from enum import Enum
-from pyampio.can import AmpioCanProtocol
-from pyampio.modules import ModuleManager
+from enum import Enum, IntEnum
+from pyampio.can import AmpioCanProtocol, Type
+from pyampio.modules import AmpioModules
 
 
 _LOG = logging.getLogger(__name__)
@@ -15,17 +15,32 @@ class GatewayState(Enum):
     """This is an enum class for Gateway State."""
 
     INIT = 0
-    MODULE_DISCOVERY = 4
-    MODULE_NAME_DISCOVERY = 5
-    MODULE_DETAILS_DISCOVERY = 6
-    ATTRIBUTE_NAMES_DISCOVERY = 7
+    QUERY_MODULES = 4
+    QUERY_MODULE_NAME = 5
+    QUERY_MODULE_DETAILS = 6
+    QUERY_MODULE_ITEM_NAMES = 7
     READY = 8
+
+
+GATEWAY_CAN_ID = 0xdeadbeef
+
+# Timeout for modules query after moving to next stage
+QUERY_MODULES_TIMEOUT = 2
+
+
+class ModuleFunction(IntEnum):
+    """This is an enmu class for Module Functions."""
+
+    Discovery = 0xff
+    QueryNames = 0x01
+    QueryDetails = 0x03
+    QueryItemNames = 0x08
 
 
 class AmpioGateway:
     """This is a AmpioGateway class handling the connection USB<->Ampio CAN bus."""
 
-    def __init__(self, port=None, loop=None):
+    def __init__(self, port=None, loop=None, no_query_module_details=False):
         """Initialize the :class: pyampio.AmpioGateway object.
 
         Args:
@@ -33,10 +48,13 @@ class AmpioGateway:
             loop: Asynction Event Loop
 
         """
-        self._modules = ModuleManager()
-        self._on_discovered_callbacks = []
         self._port = port
         self._loop = loop
+        self._no_query_module_details = no_query_module_details
+
+        self._modules = AmpioModules()
+        self._on_discovered_callbacks = []
+
         self._is_relevant = lambda can_id: True
         self._protocol_coro = create_serial_connection(
             loop, lambda: AmpioCanProtocol(
@@ -60,6 +78,16 @@ class AmpioGateway:
         """
         return self._state
 
+    @property
+    def is_ready(self):
+        """Return True if gateway is connected and Ready."""
+        return self._state == GatewayState.READY
+
+    @property
+    def is_connected(self):
+        """Return True if gateway is connected to serial port."""
+        return self.protocol is not None
+
     @state.setter
     def state(self, value):
         """Set the object state."""
@@ -82,23 +110,72 @@ class AmpioGateway:
     def on_discovered(self):
         """Fire the callback when all modules are fully discovered."""
         for callback in self._on_discovered_callbacks:
-            yield callback(modules=self._modules)
-
-    def discovery_finished(self):
-        """Move to the Module Name Discovery phase when all module discovered."""
-        _LOG.info("Total {} modules discovered".format(len(self._modules.modules)))
-        self.state = GatewayState.MODULE_NAME_DISCOVERY
-        self._loop.create_task(self.module_names_discovery())
+            yield from callback(modules=self._modules)
 
     @asyncio.coroutine
     def on_connected(self, protocol):
         """Call on gateway connected event."""
         _LOG.debug("Connected")
         self.protocol = protocol
-        self.state = GatewayState.MODULE_DISCOVERY
-        self.protocol.send_module_discovery()
-        self._loop.call_later(2, self.discovery_finished)
-        # send discovery broadcast
+        self.state = GatewayState.QUERY_MODULES
+        # send the module discovery
+        self.protocol.send_module_command(ModuleFunction.Discovery, GATEWAY_CAN_ID)
+        self._loop.call_later(QUERY_MODULES_TIMEOUT, self.discovery_finished)
+
+    def discovery_finished(self):
+        """Schedule the Query Module Name phase when all module discovered."""
+        module_quantity = len(self._modules)
+        _LOG.info("Total number of modules discovered: {}".format(module_quantity))
+
+        self.state = GatewayState.QUERY_MODULE_NAME
+        self._loop.create_task(self.query_module_names())
+
+    @asyncio.coroutine
+    def query_module_names(self):
+        """Run the Query Module Names phase."""
+        for can_id, mod in self._modules:
+            self.protocol.send_module_command(ModuleFunction.QueryNames, GATEWAY_CAN_ID, can_id)
+            yield from self._modules.is_name_updated(can_id)
+
+        _LOG.info("Module names discovered")
+        if self._no_query_module_details:
+            self.state = GatewayState.READY
+            self._loop.create_task(self.on_discovered())
+        else:
+            self.state = GatewayState.QUERY_MODULE_DETAILS
+            self._loop.create_task(self.query_module_details())
+
+    @asyncio.coroutine
+    def query_module_details(self):
+        """Run the module details discovery phase."""
+        for can_id, mod in self._modules:
+            self.protocol.send_module_command(ModuleFunction.QueryDetails, GATEWAY_CAN_ID, can_id)
+            yield from self._modules.is_details_updated(can_id)
+        for can_id, mod in self._modules:
+            _LOG.info(mod)
+        _LOG.info("Module details discovered")
+        self.state = GatewayState.READY
+        self._loop.create_task(self.on_discovered())
+
+        # TODO(klstanie): Add the attribute names discovery logic
+        # Attribute names discovery not implemented yet
+        # self.state = GatewayState.ATTRIBUTE_NAMES_DISCOVERY
+        # self._loop.create_task(self.attribute_names_discovery())
+
+    @asyncio.coroutine
+    def query(self):
+        """Run the attribute names discovery phase."""
+        for can_id, mod in dict(self._modules.modules).items():
+            self.protocol.send_module_command(ModuleFunction.QueryItemNames, GATEWAY_CAN_ID, can_id)
+            yield from self._modules.is_attribute_names_updated(can_id)
+        for can_id, mod in self._modules.modules.items():
+            _LOG.info(mod)
+        _LOG.info("Attribute names discovered")
+
+    @asyncio.coroutine
+    def close(self):
+        """Close the Gateway Serial Connection."""
+        self._loop.call_later(1, self.protocol.transport.close)
 
     @asyncio.coroutine
     def on_can_broadcast_received(self, can_id, can_data):
@@ -111,49 +188,12 @@ class AmpioGateway:
     @asyncio.coroutine
     def on_can_data_received(self, can_id, can_data):
         """Handle the data frame."""
-        if self.state == GatewayState.MODULE_DISCOVERY:
+        if self.state == GatewayState.QUERY_MODULES:
             self._modules.add_module(can_id, can_data)
-        elif self.state == GatewayState.MODULE_NAME_DISCOVERY:
+        elif self.state == GatewayState.QUERY_MODULE_NAME:
             self._modules.update_name(can_id, can_data)
-        elif self.state == GatewayState.MODULE_DETAILS_DISCOVERY:
+        elif self.state == GatewayState.QUERY_MODULE_DETAILS:
             self._modules.update_details(can_id, can_data)
-
-    @asyncio.coroutine
-    def module_names_discovery(self):
-        """Run the module names discovery phase."""
-        for can_id, mod in self._modules.modules.items():
-            # TODO: delegate to ModuleManager
-            self.protocol.send_module_name_discovery(can_id)
-            yield from self._modules.is_name_updated(can_id)
-        _LOG.info("Module names discovered")
-        self.state = GatewayState.MODULE_DETAILS_DISCOVERY
-        self._loop.create_task(self.module_details_discovery())
-
-    @asyncio.coroutine
-    def module_details_discovery(self):
-        """Run the module details discovery phase."""
-        for can_id, mod in dict(self._modules.modules).items():
-            self.protocol.send_module_details_discovery(can_id)
-            yield from self._modules.is_details_updated(can_id)
-        for can_id, mod in self._modules.modules.items():
-            _LOG.info(mod)
-        _LOG.info("Module details discovered")
-        self.state = GatewayState.READY
-        self._loop.create_task(self.on_discovered())
-        # TODO(klstanie): Add the attribute names discovery logic
-        # Attribute names discovery not implemented yet
-        # self.state = GatewayState.ATTRIBUTE_NAMES_DISCOVERY
-        # self._loop.create_task(self.attribute_names_discovery())
-
-    @asyncio.coroutine
-    def attribute_names_discovery(self):
-        """Run the attribute names discovery phase."""
-        for can_id, mod in dict(self._modules.modules).items():
-            self.protocol.send_attribute_names_discovery(can_id)
-            yield from self._modules.is_attribute_names_updated(can_id)
-        for can_id, mod in self._modules.modules.items():
-            _LOG.info(mod)
-        _LOG.info("Attribute names discovered")
 
     def register_on_value_change_callback(self, can_id, attribute, index, callback):
         """Register the value changed callback."""
@@ -163,14 +203,52 @@ class AmpioGateway:
         """Return the item state from ampio module."""
         return self._modules.get_state(can_id, attribute, index)
 
+    def get_item_last_state(self, can_id, attribute, index):
+        """Return the item last state from ampio module."""
+        return self._modules.get_last_state(can_id, attribute, index)
+
     def get_item_measurement_unit(self, can_id, attribute, index):
         """Return the item measurement unit."""
         return self._modules.get_measurement_unit(can_id, attribute, index)
 
     def get_module_name(self, can_id):
         """Return Ampio module name."""
-        return self._modules.get_module(can_id).name
+        return self._modules.get_module_name(can_id)
 
     def get_module_part_number(self, can_id):
         """Return Ampio module part number."""
-        return self._modules.get_module(can_id).part_number
+        return self._modules.get_module_part_number(can_id)
+
+    @asyncio.coroutine
+    def send_value_with_mask(self, can_id, mask, value):
+        """Send value to module using item mask.
+
+        Params:
+            can_id (int): Module CAN ID
+            mask(int): 2 byte item mask
+            value (int): Single byte value
+
+        """
+        if self.protocol:
+            value = value.to_bytes(1, byteorder='big')
+            mask &= 0xffff
+            mask = mask.to_bytes(2, byteorder='big')
+            self.protocol.send_frame(Type.SEND_VALUE_WITH_MASK, can_id, value + mask)
+        pass
+
+    @asyncio.coroutine
+    def send_value_with_index(self, can_id, index, value):
+        """Send value to module using item index.
+
+        Params:
+            can_id (int): Module CAN ID
+            index (int): 1-based item index
+            value (int): Single byte value
+
+        """
+        if self.protocol:
+            value = value.to_bytes(1, byteorder='big')
+            index -= 1
+            index &= 0xff
+            index = index.to_bytes(1, byteorder='big')
+            self.protocol.send_frame(Type.SEND_VALUE_WITH_INDEX, can_id, value + index)
