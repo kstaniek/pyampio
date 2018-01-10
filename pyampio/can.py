@@ -67,8 +67,8 @@ class AmpioCanProtocol(asyncio.Protocol):
         """Protocol connection made."""
         self.transport = transport
         _LOG.debug('port opened')
-        self.transport.serial.rts = True
-        self.transport.serial.dtr = True
+        self.transport.serial.rts = False
+        self.transport.serial.dtr = False
         self.transport.serial.write_timeout = 10
         self.transport.serial.reset_input_buffer()
         self.transport.serial.reset_output_buffer()
