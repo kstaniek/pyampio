@@ -1,6 +1,7 @@
 """This is a main AmpioGateway implementation module."""
 
 import asyncio
+import serial
 import logging
 from serial_asyncio import create_serial_connection
 from enum import Enum, IntEnum
@@ -56,6 +57,7 @@ class AmpioGateway:
         self._on_discovered_callbacks = []
 
         self._is_relevant = lambda can_id: True
+        self._reset_serial(port)
         self._protocol_coro = create_serial_connection(
             loop, lambda: AmpioCanProtocol(
                 on_connected=self.on_connected,
@@ -66,7 +68,11 @@ class AmpioGateway:
         )
         self.protocol = None
         self._state = GatewayState.INIT
-        asyncio.ensure_future(self._protocol_coro, loop=self._loop)
+        loop.create_task(self._protocol_coro)
+
+    def _reset_serial(self, port):
+        ser = serial.Serial(port)
+        ser.close()
 
     @property
     def state(self):
@@ -261,7 +267,6 @@ class AmpioGateway:
             values = red << 16 | green << 8 | blue
             values = values.to_bytes(3, byteorder='big')
             data = bytearray(can_id_bytes + b'\x14' + values)
-            print(data)
             self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
 
     @asyncio.coroutine
@@ -271,7 +276,6 @@ class AmpioGateway:
             can_id_bytes = can_id.to_bytes(4, byteorder='big')
             values = white.to_bytes(1, byteorder='big')
             data = bytearray(can_id_bytes + b'\x15' + values + b'\x03')
-            print("SEND_WHITE: {}".format(data))
             self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
 
     @asyncio.coroutine
@@ -281,7 +285,6 @@ class AmpioGateway:
             can_id_bytes = can_id.to_bytes(4, byteorder='big')
             values = white.to_bytes(1, byteorder='big')
             data = bytearray(can_id_bytes + b'\x15' + values + b'\x00')
-            print("SEND_WHITE: {}".format(data))
             self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
 
     @asyncio.coroutine
@@ -291,7 +294,6 @@ class AmpioGateway:
             can_id_bytes = can_id.to_bytes(4, byteorder='big')
             values = white.to_bytes(1, byteorder='big')
             data = bytearray(can_id_bytes + b'\x15' + values + b'\x01')
-            print("SEND_WHITE: {}".format(data))
             self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
 
     @asyncio.coroutine
@@ -301,7 +303,6 @@ class AmpioGateway:
             can_id_bytes = can_id.to_bytes(4, byteorder='big')
             values = white.to_bytes(1, byteorder='big')
             data = bytearray(can_id_bytes + b'\x15' + values + b'\x02')
-            print("SEND_WHITE: {}".format(data))
             self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
 
     @asyncio.coroutine
