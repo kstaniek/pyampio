@@ -17,6 +17,7 @@ class Type(Enum):
     CAN = 0x00
     SEND_VALUE_WITH_MASK = 0x10
     SEND_VALUE_WITH_INDEX = 0x11
+    SEND_COMPLEX_FUNCTION = 0x12
 
 
 class CanType(Enum):
@@ -111,19 +112,19 @@ class AmpioCanProtocol(asyncio.Protocol):
             data (bytearray): Array of CAN data bytes
 
         """
-        self.send_frame(Type.CAN, can_id, data)
+        self.send_frame(Type.CAN, can_id.to_bytes(4, byteorder='big'), data)
 
-    def send_frame(self, frame_type, can_id, data):
+    def send_frame(self, frame_type, can_id_bytes, data):
         """Send the RAW frame to serial interface.
 
         Args:
             frame_type (Type): Frame type enum
-            can_id (int): CAN ID
+            can_id_bytes (bytearray): CAN ID
             data (bytearray): Array of CAN data bytes
 
         """
         # encode can_id to bytes
-        can_id_bytes = can_id.to_bytes(4, byteorder='big')
+        # can_id_bytes = can_id.to_bytes(4, byteorder='big')
         # build the frame
         frame = bytearray(b'\x2d\xd4\x00\x00' + can_id_bytes + data + b'\x00')
         # calculate and update length
@@ -134,7 +135,7 @@ class AmpioCanProtocol(asyncio.Protocol):
         frame[-1] = sum(frame[:-1]) & 0xff
         self.transport.write(frame)
         can_data_str = " ".join(["{:02x}".format(c) for c in frame])
-        _LOG.debug("CAN SERIAL OUT: frame=[{}]".format(can_data_str))
+        _LOG.info("CAN SERIAL OUT: frame=[{}]".format(can_data_str))
 
     @asyncio.coroutine
     def _process_frame(self, frame):

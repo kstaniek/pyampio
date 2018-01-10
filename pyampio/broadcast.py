@@ -246,8 +246,12 @@ class BroadcastValue8b(metaclass=BroadcastMeta):
 
     def update(self, data):
         """Update BroadcastValue8b class from frame data."""
-        self._previous_values = self._values
-        self._values = [int(temp) for temp in data] if data else [0] * 6
+        values = [int(temp) for temp in data] if data else [None] * 6
+        for index, value in enumerate(values):
+            if value != self._values[index]:
+                self._previous_values[index] = self._values[index]
+                self._values[index] = value
+
         _LOG.debug("Value 8b: Value {}".format(self._values))
 
     def changes(self):
@@ -295,7 +299,7 @@ class BroadcastValue16b(metaclass=BroadcastMeta):
 
     def update(self, data):
         """Update BroadcastValue16b class from frame data."""
-        self._previous_values = self._values
+        self._previous_values = list(self._values)
         self._values = [int.from_bytes(temp, byteorder='little', signed=False)
                         for temp in zip(*[iter(data)] * 2)] if data else [0] * 3
         _LOG.debug("Value 16b: Value {}".format(self._values))

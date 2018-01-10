@@ -251,4 +251,131 @@ class AmpioGateway:
             index -= 1
             index &= 0xff
             index = index.to_bytes(1, byteorder='big')
-            self.protocol.send_frame(Type.SEND_VALUE_WITH_INDEX, can_id, value + index)
+            self.protocol.send_frame(Type.SEND_VALUE_WITH_INDEX, can_id.to_bytes(4, byteorder='big'), value + index)
+
+    @asyncio.coroutine
+    def send_rgb_values(self, can_id, red, green, blue):
+        """Send rgb color values to module."""
+        if self.protocol:
+            can_id_bytes = can_id.to_bytes(4, byteorder='big')
+            values = red << 16 | green << 8 | blue
+            values = values.to_bytes(3, byteorder='big')
+            data = bytearray(can_id_bytes + b'\x14' + values)
+            print(data)
+            self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
+
+    @asyncio.coroutine
+    def send_white_value(self, can_id, white):
+        """Send white color value to module."""
+        if self.protocol:
+            can_id_bytes = can_id.to_bytes(4, byteorder='big')
+            values = white.to_bytes(1, byteorder='big')
+            data = bytearray(can_id_bytes + b'\x15' + values + b'\x03')
+            print("SEND_WHITE: {}".format(data))
+            self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
+
+    @asyncio.coroutine
+    def send_red_value(self, can_id, white):
+        """Send red color value to module."""
+        if self.protocol:
+            can_id_bytes = can_id.to_bytes(4, byteorder='big')
+            values = white.to_bytes(1, byteorder='big')
+            data = bytearray(can_id_bytes + b'\x15' + values + b'\x00')
+            print("SEND_WHITE: {}".format(data))
+            self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
+
+    @asyncio.coroutine
+    def send_green_value(self, can_id, white):
+        """Send green color value to module."""
+        if self.protocol:
+            can_id_bytes = can_id.to_bytes(4, byteorder='big')
+            values = white.to_bytes(1, byteorder='big')
+            data = bytearray(can_id_bytes + b'\x15' + values + b'\x01')
+            print("SEND_WHITE: {}".format(data))
+            self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
+
+    @asyncio.coroutine
+    def send_blue_value(self, can_id, white):
+        """Send blue color value to module."""
+        if self.protocol:
+            can_id_bytes = can_id.to_bytes(4, byteorder='big')
+            values = white.to_bytes(1, byteorder='big')
+            data = bytearray(can_id_bytes + b'\x15' + values + b'\x02')
+            print("SEND_WHITE: {}".format(data))
+            self.protocol.send_can_frame(GATEWAY_CAN_ID, data)
+
+    @asyncio.coroutine
+    def send_arm_in_mode_0(self, can_id, zone):
+        """Send Arm in Mode 0 command to Satel Module."""
+        cmd = b'\x1E\x00\x80'  # 0x1E - SATEL, 0x00 - API_SATEL_SUB_CMD (0x00 - CMD PIN from PAR), 0x80 - SATEL CMD
+
+        zone_mask = (0x01 << (zone - 1)) & 0xffffffff
+
+        zone_mask_bytes = zone_mask.to_bytes(4, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'), cmd + zone_mask_bytes)
+
+    @asyncio.coroutine
+    def send_disarm(self, can_id, zone, code=None):
+        """Send Disarm command to Satel Module."""
+        cmd = b'\x1E\x00\x84'  # 0x1E - SATEL, 0x00 - API_SATEL_SUB_CMD (0x00 - CMD PIN from PAR), 0x84 - SATEL CMD
+        zone_mask = (0x01 << (zone - 1)) & 0xffffffff
+        zone_mask_bytes = zone_mask.to_bytes(4, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'), cmd + zone_mask_bytes)
+
+    @asyncio.coroutine
+    def send_open_cover(self, can_id, index):
+        """Send open cover command to module."""
+        cmd = b'\x02'
+        mask = (0x01 << (index - 1)) & 0xff
+        mask_bytes = mask.to_bytes(1, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_VALUE_WITH_MASK,
+            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes)
+
+    @asyncio.coroutine
+    def send_close_cover(self, can_id, index):
+        """Send close cover command to module."""
+        cmd = b'\x01'
+        mask = (0x01 << (index - 1)) & 0xff
+        mask_bytes = mask.to_bytes(1, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_VALUE_WITH_MASK,
+            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes)
+
+    @asyncio.coroutine
+    def send_stop_cover(self, can_id, index):
+        """Send stop cover command to module."""
+        cmd = b'\x00'
+        mask = (0x01 << (index - 1)) & 0xff
+        mask_bytes = mask.to_bytes(1, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_VALUE_WITH_MASK,
+            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes)
+
+    @asyncio.coroutine
+    def send_set_cover_position(self, can_id, index, position):
+        """Sent the command to set the cover position."""
+        cmd = b'\x00\x01'
+        mask = (0x01 << (index - 1)) & 0xff
+        mask_bytes = mask.to_bytes(1, byteorder='little')
+        position_bytes = position.to_bytes(1, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes + position_bytes + b'\x66'  # tilt back prev pos
+        )
+
+    @asyncio.coroutine
+    def send_set_cover_tilt_position(self, can_id, index, position):
+        """Send the command to set the cover tilt position."""
+        cmd = b'\x00\x02'
+        mask = (0x01 << (index - 1)) & 0xff
+        mask_bytes = mask.to_bytes(1, byteorder='little')
+        position_bytes = position.to_bytes(1, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes + position_bytes
+        )
