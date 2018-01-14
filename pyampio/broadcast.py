@@ -353,7 +353,8 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
         """Return the current value state from broadcast."""
         try:
             return self._values[index - 1]
-        except IndexError:
+        except KeyError:
+            _LOG.warning("Value 32b: No value for index: {}".format(index))
             return None
         return None
 
@@ -361,7 +362,8 @@ class BroadcastValue32b(metaclass=BroadcastMeta):
         """Return the last value state from broadcast."""
         try:
             return self._previous_values[index - 1]
-        except IndexError:
+        except KeyError:
+            _LOG.warning("Value 32b: No value for index: {}".format(index))
             return None
         return None
 
