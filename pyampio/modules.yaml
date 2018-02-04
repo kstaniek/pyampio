@@ -950,7 +950,7 @@ MCON:
 MCON-484:
   code: 0x19
   protocol: 0x0b
-  software_versions: []
+  software_versions: [907, 707]
   description: RS-484 Serial Communication Module
   attributes:
     Flag:
