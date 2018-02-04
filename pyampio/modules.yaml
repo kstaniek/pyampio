@@ -958,6 +958,45 @@ MCON-484:
         base: 1
         min: 1
         max: 32
+    Temperature1T3:
+      - name: temperature
+        base: 1
+        min: 1
+        max: 3
+        unit: "°C"
+        converter: convert_temperature
+    Temperature4T6:
+      - name: temperature
+        base: 4
+        min: 1
+        max: 3
+        unit: "°C"
+        converter: convert_temperature
+    Value16b1T3:
+      - name: value16b
+        base: 1
+        min: 1
+        max: 3
+    Value16b4T6:
+      - name: value16b
+        base: 4
+        min: 1
+        max: 3
+    Value16b7T9:
+      - name: value16b
+        base: 7
+        min: 1
+        max: 3
+    Value16b10T12:
+      - name: value16b
+        base: 10
+        min: 1
+        max: 3
+    Value16b13T15:
+      - name: value16b
+        base: 13
+        min: 1
+        max: 3
 
 MCON-232:
   code: 0x19
