@@ -4,6 +4,11 @@
 from calendar import day_name
 
 
+def convert_unchanged(value):
+    """Fake data converter."""
+    return value
+
+
 def convert_temperature_int(value):
     """Convert the integer temperature value to signed."""
     return int(value) - 100

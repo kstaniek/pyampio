@@ -1,19 +1,38 @@
+# -*- coding: utf-8 -*-
 """This is a module implementing the Ampio Module class."""
 
+import io
 import yaml
 import re
 from functools import partial
 from collections import defaultdict
+from inspect import getmembers, isfunction
 import datetime as dt
 from pyampio.broadcast import BroadcastCache
-from pyampio.broadcast import BroadcastTypes # noqa
-from pyampio.converters import convert_temperature, convert_weekday, convert_meteo, convert_temperature_int  # noqa
+from pyampio.broadcast import BroadcastTypes  # noqa
+from pyampio import converters
 import logging
 from voluptuous import Schema, Required, All, Lower, Any, Optional, Coerce, Invalid
+from voluptuous.humanize import validate_with_humanized_errors
+
 
 _LOG = logging.getLogger(__name__)
 
 QUERY_MODULE_DETAILS_TIMEOUT_SECONDS = 2
+
+
+def conv():
+    """Build map of converter names and code functions."""
+    conv_map = {}
+    for name, code in getmembers(converters):
+        if isfunction(code):
+            conv_map[name] = code
+    return conv_map
+
+
+converters_map = conv()
+
+converter_list = [o for o in getmembers(converters) if isfunction(o[1])]
 
 
 class AmpioModule:
@@ -293,36 +312,34 @@ class AmpioModule:
 
 def load_yaml(file_path):
     """Load YAML file from full file path and return dict."""
-    with open(file_path, 'r') as yamlfile:
+    dictionary = {}
+    with io.open(file_path, 'r', encoding="utf-8") as yamlfile:
         try:
             dictionary = yaml.load(yamlfile)
         except yaml.YAMLError:
             raise
-            return {}
     return dictionary
 
 
 module_data = load_yaml(__file__[:-2] + "yaml")
 
 
-def convert_unchanged(value):
-    """Fake data converter."""
-    return value
-
-
 def validate_converter(value):
-    """Validate the converter function."""
-    try:
-        return eval(value)
-    except AttributeError:
-        raise Invalid("Unknown converter function: {}".format(value))
-    return None
+    """Validate the converter function name."""
+    if value in converters_map or value is None:
+        return value
+    else:
+        raise Invalid("Unknown converter function: '{}' type: '{}'".format(value, type(value)))
 
 
 def update_converter_if_none(value):
     """Make a default converter to transparently pass the value without conversion."""
-    if value['converter'] is None:
-        value['converter'] = convert_unchanged
+    conv_func_name = value.get('converter')
+    if conv_func_name:
+        value['converter'] = converters_map[conv_func_name]
+    else:
+        value['converter'] = converters_map['convert_unchanged']
+
     return value
 
 
@@ -339,11 +356,11 @@ def validate_broadcast(value):
 
 
 BROADCAST_SCHEMA = All(Schema({
-    Required('name'): str,
-    Required('base'): int,
-    Required('min'): int,
-    Required('max'): int,
-    Optional('unit', default=""): str,
+    Required('name'): Coerce(str),
+    Required('base'): Coerce(int),
+    Required('min'): Coerce(int),
+    Required('max'): Coerce(int),
+    Optional('unit', default=""): Coerce(str),
     Required('converter', default=None): validate_converter,
 }), update_converter_if_none)
 
@@ -364,7 +381,7 @@ SCHEMA = All(Schema({
     str: MODULE_INFO_SCHEMA,
 }))
 
-
+validate_with_humanized_errors(data=module_data, schema=SCHEMA)
 module_info = SCHEMA(module_data)
 
 
