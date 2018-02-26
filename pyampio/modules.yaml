@@ -1,3 +1,4 @@
+---
 # Ampio modules definition file for module discovery
 #
 # Structure:
@@ -13,7 +14,8 @@
 #     - base: the base index
 #     - min: the lowest index of the value inside the broadcast
 #     - max: the highest index of the value inside the broadcast
-#     - converter: the converter function name (see the converters.py for the names)
+#     - converter: the converter function name
+#         (see the converters.py for the names)
 
 MROL-4s:
   code: 0x03
@@ -31,27 +33,27 @@ MROL-4s:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Analog1T6:
       - name: cover_position
         base: 1
         min: 1
         max: 4
-        unit: "%"
+        unit: '%'
     Analog7T12:
       - name: tilt_position
         base: 1
         min: 1
         max: 4
-        unit: "%"
+        unit: '%'
     BinInOut:
       - name: closing
         base: 1
@@ -103,14 +105,14 @@ MPR-8s:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     BinInOut:
       - name: bin_output
@@ -138,14 +140,14 @@ MDIM-8s:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     BinInOut:
       - name: bin_output
@@ -179,14 +181,14 @@ MDOT-4:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     BinInOut:
       - name: bin_input
@@ -214,14 +216,14 @@ MSERV-3s:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     BinInOut:
       - name: bin_input
@@ -249,14 +251,14 @@ MDOT-9:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     BinInOut:
       - name: bin_input
@@ -284,14 +286,14 @@ MRGBu-1:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Analog1T6:
       - name: color_red
@@ -410,13 +412,13 @@ MRT-16s:
         base: 1
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 1
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 1
@@ -443,13 +445,13 @@ MRT-16s:
         base: 2
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 2
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 2
@@ -476,13 +478,13 @@ MRT-16s:
         base: 3
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 3
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 3
@@ -509,13 +511,13 @@ MRT-16s:
         base: 4
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 4
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 4
@@ -542,13 +544,13 @@ MRT-16s:
         base: 5
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 5
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 5
@@ -575,13 +577,13 @@ MRT-16s:
         base: 6
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 6
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 6
@@ -608,13 +610,13 @@ MRT-16s:
         base: 7
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 7
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 7
@@ -641,13 +643,13 @@ MRT-16s:
         base: 8
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 8
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 8
@@ -674,13 +676,13 @@ MRT-16s:
         base: 9
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 9
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 9
@@ -707,13 +709,13 @@ MRT-16s:
         base: 10
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 10
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 10
@@ -740,13 +742,13 @@ MRT-16s:
         base: 11
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 11
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 11
@@ -773,13 +775,13 @@ MRT-16s:
         base: 12
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 12
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 12
@@ -806,13 +808,13 @@ MRT-16s:
         base: 13
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 13
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 13
@@ -839,13 +841,13 @@ MRT-16s:
         base: 14
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 14
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 14
@@ -872,13 +874,13 @@ MRT-16s:
         base: 15
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 15
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 15
@@ -905,13 +907,13 @@ MRT-16s:
         base: 16
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: setpoint
         base: 16
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: control_mode
         base: 16
@@ -963,14 +965,14 @@ MCON-484:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Value16b1T3:
       - name: value16b
@@ -1145,14 +1147,14 @@ MDOT-15LCD:
         base: 1
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     Temperature4T6:
       - name: temperature
         base: 4
         min: 1
         max: 3
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
     BinInOut:
       - name: bin_input
@@ -1201,7 +1203,7 @@ METEO-1s:
         base: 1
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_meteo
       - name: luminance
         base: 1
@@ -1244,33 +1246,30 @@ MULTISENS:
         base: 1
         min: 1
         max: 1
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: external_temperature
         base: 1
         min: 2
         max: 2
-        unit: "°C"
+        unit: '°C'
         converter: convert_temperature
       - name: atmospheric_pressure
         base: 1
         min: 3
         max: 3
         unit: "hPa"
-        converter: None
     Value32b:
       - name: humidity
         base: 1
         min: 1
         max: 1
-        unit: "%"
-        converter: None
+        unit: '%'
       - name: mean-sea-level-pressure
         base: 1
         min: 2
         max: 2
         unit: "hPa"
-        converter: None
 
 MWRC:
   code: 0x31
