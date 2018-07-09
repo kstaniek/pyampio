@@ -12,6 +12,11 @@ from pyampio.modules import AmpioModules
 _LOG = logging.getLogger(__name__)
 
 
+COVER_STOP = 0x00
+COVER_CLOSE = 0x01
+COVER_OPEN = 0x02
+
+
 class GatewayState(Enum):
     """This is an enum class for Gateway State."""
 
@@ -236,10 +241,11 @@ class AmpioGateway:
 
         """
         if self.protocol:
-            value = value.to_bytes(1, byteorder='big')
+            if not isinstance(value, bytes):
+                value = value.to_bytes(1, byteorder='big')
             mask &= 0xffff
             mask = mask.to_bytes(2, byteorder='big')
-            self.protocol.send_frame(Type.SEND_VALUE_WITH_MASK, can_id, value + mask)
+            self.protocol.send_frame(Type.SEND_VALUE_WITH_MASK, can_id.to_bytes(4, byteorder='big'), value + mask)
         pass
 
     @asyncio.coroutine
@@ -330,32 +336,20 @@ class AmpioGateway:
     @asyncio.coroutine
     def send_open_cover(self, can_id, index):
         """Send open cover command to module."""
-        cmd = b'\x02'
-        mask = (0x01 << (index - 1)) & 0xff
-        mask_bytes = mask.to_bytes(1, byteorder='little')
-        self.protocol.send_frame(
-            Type.SEND_VALUE_WITH_MASK,
-            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes)
+        mask = (0x0001 << (index - 1)) & 0xffff
+        self.send_value_with_mask(can_id, mask, COVER_OPEN)
 
     @asyncio.coroutine
     def send_close_cover(self, can_id, index):
         """Send close cover command to module."""
-        cmd = b'\x01'
-        mask = (0x01 << (index - 1)) & 0xff
-        mask_bytes = mask.to_bytes(1, byteorder='little')
-        self.protocol.send_frame(
-            Type.SEND_VALUE_WITH_MASK,
-            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes)
+        mask = (0x0001 << (index - 1)) & 0xffff
+        self.send_value_with_mask(can_id, mask, COVER_CLOSE)
 
     @asyncio.coroutine
     def send_stop_cover(self, can_id, index):
         """Send stop cover command to module."""
-        cmd = b'\x00'
-        mask = (0x01 << (index - 1)) & 0xff
-        mask_bytes = mask.to_bytes(1, byteorder='little')
-        self.protocol.send_frame(
-            Type.SEND_VALUE_WITH_MASK,
-            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes)
+        mask = (0x0001 << (index - 1)) & 0xffff
+        self.send_value_with_mask(can_id, mask, COVER_STOP)
 
     @asyncio.coroutine
     def send_set_cover_position(self, can_id, index, position):
@@ -379,4 +373,35 @@ class AmpioGateway:
         self.protocol.send_frame(
             Type.SEND_COMPLEX_FUNCTION,
             can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes + position_bytes
+        )
+
+    @asyncio.coroutine
+    def send_buzzer(self, can_id, tone, duration):
+        """Send the command to trigger buzzer for specific tone and duration.
+
+        Duration is in 10ms.
+        """
+        cmd = b'\x09\x00'
+        tone_bytes = (tone & 0x1f).to_bytes(1, byteorder='little')
+        duration_bytes = (duration & 0xff).to_bytes(1, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'), cmd + tone_bytes + duration_bytes
+        )
+
+    @asyncio.coroutine
+    def send_set_flag(self, can_id, index, value, duration):
+        """Set the flag with specific index to value and duration.
+
+        Duration is in 10ms units.
+        """
+        cmd = b'\x01\x00'
+        mask = (0x01 << (index - 1)) & 0xffffffff
+        mask_bytes = mask.to_bytes(4, byteorder='little')
+        value_bytes = (value & 0xff).to_bytes(1, byteorder='little')
+        duration = duration & 0xffffff
+        duration_bytes = duration.to_bytes(3, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes + value_bytes + duration_bytes
         )
