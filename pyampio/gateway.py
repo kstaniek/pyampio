@@ -337,19 +337,19 @@ class AmpioGateway:
     def send_open_cover(self, can_id, index):
         """Send open cover command to module."""
         mask = (0x0001 << (index - 1)) & 0xffff
-        self.send_value_with_mask(can_id, mask, COVER_OPEN)
+        yield from self.send_value_with_mask(can_id, mask, COVER_OPEN)
 
     @asyncio.coroutine
     def send_close_cover(self, can_id, index):
         """Send close cover command to module."""
         mask = (0x0001 << (index - 1)) & 0xffff
-        self.send_value_with_mask(can_id, mask, COVER_CLOSE)
+        yield from self.send_value_with_mask(can_id, mask, COVER_CLOSE)
 
     @asyncio.coroutine
     def send_stop_cover(self, can_id, index):
         """Send stop cover command to module."""
         mask = (0x0001 << (index - 1)) & 0xffff
-        self.send_value_with_mask(can_id, mask, COVER_STOP)
+        yield from self.send_value_with_mask(can_id, mask, COVER_STOP)
 
     @asyncio.coroutine
     def send_set_cover_position(self, can_id, index, position):
