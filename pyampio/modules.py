@@ -316,8 +316,8 @@ def load_yaml(file_path):
     with io.open(file_path, 'r', encoding="utf-8") as yamlfile:
         try:
             dictionary = yaml.load(yamlfile)
-        except yaml.YAMLError:
-            raise
+        except yaml.YAMLError as exct:
+            raise exct
     return dictionary
 
 
