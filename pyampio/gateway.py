@@ -403,5 +403,27 @@ class AmpioGateway:
         duration_bytes = duration.to_bytes(3, byteorder='little')
         self.protocol.send_frame(
             Type.SEND_COMPLEX_FUNCTION,
-            can_id.to_bytes(4, byteorder='big'), cmd + mask_bytes + value_bytes + duration_bytes
+            can_id.to_bytes(4, byteorder='big'),
+            cmd + mask_bytes + value_bytes + duration_bytes
+        )
+
+    @asyncio.coroutine
+    def send_modbus(self, can_id, address, operation, index, value):
+        """Send data to modbus.
+
+        Params:
+            address(int): Modbus MTU address
+            operation(int): Modbus Operation
+            index(int): Modbus register
+            value(int): Modbus value
+        """
+        cmd = b'\x80'
+        address_bytes = address.to_bytes(1, byteorder='big')
+        operation_bytes = operation.to_bytes(1, byteorder='big')
+        index_bytes = index.to_bytes(2, byteorder='big')
+        value_bytes = value.to_bytes(2, byteorder='big')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'),
+            cmd + address_bytes + operation_bytes + index_bytes + value_bytes
         )
