@@ -951,7 +951,7 @@ MCON:
 
 MCON-484:
   code: 0x19
-  protocol: 0x0b
+  protocol: any
   software_versions: [907, 707, 1807]
   description: RS-484 Serial Communication Module
   attributes:
