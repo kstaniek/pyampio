@@ -1,6 +1,9 @@
 language: python
-python:
-- '3.7'
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
 install:
 - pip install tox
 script:
@@ -13,7 +16,7 @@ deploy:
     tags: true
     distributions: sdist bdist_wheel
     repo: kstaniek/pyampio
-    python: 3.6
+    python: 3.7
   skip_upload_docs: true
   password:
     secure: SOfx4mU+aosn27khK2tMzVZE/L+HDETohkIV+m9QBdBO0uBEKj6gzbno8ZnUZTNRdhSQC7AR9d5NJWO1aojsuMA377nMBdmAr6pWQZlE9PJXK3k0Pok33VJWEADUkOcJkDMzbr0cpcntbZgplXZWWhObO6Gf3/OHLT9tqS6G2A/RRhSKb8EGOTDoAKKESiW32JEeMGBzRgiKt+HJUQw34ry/YWWa6bZaqtPqIQrQOQfR+TCYvzO0n32MXyiY50puSgcDZWprQN8Nkh00JumSx1i5tYSii0Co2JqxdvAR9LCraaumubBPQNuqNr9rXYI9IpZvvljsNd6nWxRqnOWxbyqCkwGGA8vGrbqp4cUWmBreRdWN7oM2nD25Eo4RXDlSZJM1pOaqwKkPWvZj/hXPaPsvUU9ZWYy/HfUqOTPAMM2cjoOJa2JHegtTAV3uagBWLK7FPwUNRWAz2eCtlabl1MxxiRphQhu8WnpoeyTCW8qZE65kwMvQ447Aczj97HxihCY+TIxYjRyDUjJpgpLJrLsNdrefBI1aK55sfjYrG7xIAqAW8JhnTW72+UqWOqC9pEev3mfRjLqBGpKlxgh4LyhoP4ApWE/DYC0osdXx1P8d6zYnD7gDemPNMhOPgALhLzZypKOGBaoYSk38R2kGd1lN8o3MhEnEy9S+fCuWeJ4=
