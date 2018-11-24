@@ -427,3 +427,45 @@ class AmpioGateway:
             can_id.to_bytes(4, byteorder='big'),
             cmd + address_bytes + operation_bytes + index_bytes + value_bytes
         )
+
+    @asyncio.coroutine
+    def send_set_zone_temperature(self, can_id, zone, temperature):
+        """Set target temperature for zone.
+
+        Params:
+            can_id(int): CAN ID
+            zone(int): Zone zero-based index
+            temperature(float): Setpoint temperature
+        """
+        cmd = b'\x08\x01'  # set temperature for zone
+        zone_bytes = zone.to_bytes(1, byteorder='big')
+        temperature = int(temperature * 10) # convert to scaled int
+        print(temperature)
+        temperature_bytes = temperature.to_bytes(2, byteorder='little')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'),
+            cmd + zone_bytes + temperature_bytes
+        )
+
+    @asyncio.coroutine
+    def send_set_zone_mode(self, can_id, zone, mode):
+        """Set target temperature for zone.
+
+        Params:
+            can_id(int): CAN ID
+            zone(int): Zone zero-based index
+            mode: 0 - calendar
+                  1 - manual
+                  2 - semi-manual
+                  3 - holiday
+                  4 - blocked
+        """
+        cmd = b'\x08\x02'  # set mode for zone
+        zone_bytes = zone.to_bytes(1, byteorder='big')
+        mode_bytes = mode.to_bytes(1, byteorder='big')
+        self.protocol.send_frame(
+            Type.SEND_COMPLEX_FUNCTION,
+            can_id.to_bytes(4, byteorder='big'),
+            cmd + zone_bytes + mode_bytes
+        )
