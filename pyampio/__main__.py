@@ -133,6 +133,86 @@ def call(port, log_level, can_id, command, index, value):
     loop.close()
     pass
 
+@asyncio.coroutine
+def send_set_zone_mode(ampio, can_id, zone, mode):
+    """Send command to Ampio Module."""
+    while not ampio.is_connected:
+        yield
+
+    yield from ampio.send_set_zone_mode(can_id, zone, mode)
+    # yield from ampio.send_value_with_mask(0x1ae0, 0x00, 0x08) # mask 0x08 - index = 4
+
+    # yield from ampio.send_value_with_index(0x13ec, 0xff, 4)
+    # yield from ampio.send_value_with_mask(0x13ec, 0x00, 0x10)
+    yield from ampio.close()
+
+
+@cli.command("set_mode", help="Set mode for zone", short_help="Set mode")
+@click.option("--port", required=True, envvar='AMPIO_PORT', type=click.Path(),
+              help='The USB interface full path i.e. /dev/cu.usbserial-DN01D1W1. '
+                   'If no --port option provided the AMPIO_PORT environment variable is used.')
+@click.option("--log-level", type=click.Choice(["NONE", "DEBUG", "INFO", "ERROR"]),
+              show_default=True, default='ERROR',
+              help='Logging level.')
+@click.option("--can_id", required=True, type=BASED_INT,
+              help="CAN ID")
+@click.option("--zone", required=True, type=int,
+              help="Zone 0..15")
+@click.option("--mode", required=True, type=int,
+              help="Mode")
+def set_mode(port, log_level, can_id, zone, mode):
+    """Call module function."""
+    formatter = "[%(asctime)s] %(levelname)s - %(message)s"
+    logging.basicConfig(level=log_levels[log_level], format=formatter)
+
+    loop = asyncio.get_event_loop()
+    ampio_gw = AmpioGateway(port=port, loop=loop)
+    # ampio_gw.add_on_discovered_callback(partial(on_discovered_call, loop, can_id, command, index, value, ampio_gw))
+    loop.create_task(send_set_zone_mode(ampio_gw, can_id, zone, mode))
+    loop.run_forever()
+    loop.close()
+
+@asyncio.coroutine
+def send_set_zone_temperature(ampio, can_id, zone, temperature):
+    """Send command to Ampio Module."""
+    while not ampio.is_connected:
+        yield
+
+    yield from ampio.send_set_zone_temperature(can_id, zone, temperature)
+    # yield from ampio.send_value_with_mask(0x1ae0, 0x00, 0x08) # mask 0x08 - index = 4
+
+    # yield from ampio.send_value_with_index(0x13ec, 0xff, 4)
+    # yield from ampio.send_value_with_mask(0x13ec, 0x00, 0x10)
+    yield from ampio.close()
+
+
+@cli.command("set_temperature", help="Set temperature for zone", short_help="Set temperature")
+@click.option("--port", required=True, envvar='AMPIO_PORT', type=click.Path(),
+              help='The USB interface full path i.e. /dev/cu.usbserial-DN01D1W1. '
+                   'If no --port option provided the AMPIO_PORT environment variable is used.')
+@click.option("--log-level", type=click.Choice(["NONE", "DEBUG", "INFO", "ERROR"]),
+              show_default=True, default='ERROR',
+              help='Logging level.')
+@click.option("--can_id", required=True, type=BASED_INT,
+              help="CAN ID")
+@click.option("--zone", required=True, type=int,
+              help="Zone 0..15")
+@click.option("--temperature", required=True, type=float,
+              help="Temperature")
+def set_temperature(port, log_level, can_id, zone, temperature):
+    """Call module function."""
+    formatter = "[%(asctime)s] %(levelname)s - %(message)s"
+    logging.basicConfig(level=log_levels[log_level], format=formatter)
+
+    loop = asyncio.get_event_loop()
+    ampio_gw = AmpioGateway(port=port, loop=loop)
+    # ampio_gw.add_on_discovered_callback(partial(on_discovered_call, loop, can_id, command, index, value, ampio_gw))
+    loop.create_task(send_set_zone_temperature(ampio_gw, can_id, zone, temperature))
+    loop.run_forever()
+    loop.close()
+    pass
+
+
 
 @cli.command("run", help="Run Ampio Gateway", short_help="Run Gateway")
 @click.option("--port", required=True, envvar='AMPIO_PORT', type=click.Path(),
