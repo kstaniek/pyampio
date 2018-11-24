@@ -439,7 +439,7 @@ class AmpioGateway:
         """
         cmd = b'\x08\x01'  # set temperature for zone
         zone_bytes = zone.to_bytes(1, byteorder='big')
-        temperature = int(temperature * 10) # convert to scaled int
+        temperature = int(temperature * 10)  # convert to scaled int
         print(temperature)
         temperature_bytes = temperature.to_bytes(2, byteorder='little')
         self.protocol.send_frame(

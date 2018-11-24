@@ -131,7 +131,7 @@ def call(port, log_level, can_id, command, index, value):
     loop.create_task(send_command(ampio_gw, can_id, command, index, value))
     loop.run_forever()
     loop.close()
-    pass
+
 
 @asyncio.coroutine
 def send_set_zone_mode(ampio, can_id, zone, mode):
@@ -172,6 +172,7 @@ def set_mode(port, log_level, can_id, zone, mode):
     loop.run_forever()
     loop.close()
 
+
 @asyncio.coroutine
 def send_set_zone_temperature(ampio, can_id, zone, temperature):
     """Send command to Ampio Module."""
@@ -211,7 +212,6 @@ def set_temperature(port, log_level, can_id, zone, temperature):
     loop.run_forever()
     loop.close()
     pass
-
 
 
 @cli.command("run", help="Run Ampio Gateway", short_help="Run Gateway")
