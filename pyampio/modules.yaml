@@ -999,6 +999,11 @@ MCON-484:
         base: 13
         min: 1
         max: 3
+    Value32b:
+      - name: value32b
+        base: 1
+        min: 1
+        max: 32
 
 MCON-232:
   code: 0x19
