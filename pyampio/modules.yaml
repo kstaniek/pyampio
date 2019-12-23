@@ -1020,7 +1020,7 @@ MCON-232:
 MCON-232SATEL:
   code: 0x19
   protocol: any
-  software_versions: [1901, 1902, 2101]
+  software_versions: [1901, 1902, 2101, 2201, 2301, 2401]
   description: RS-232 Serial Communication Module for Satel
   attributes:
     Flag:
